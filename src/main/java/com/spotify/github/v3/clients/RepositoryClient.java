@@ -53,6 +53,8 @@ import com.spotify.github.v3.repos.Status;
 
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +78,7 @@ public class RepositoryClient {
   private static final String CONTENTS_URI_TEMPLATE = "/repos/%s/%s/contents/%s%s";
   public static final String STATUS_URI_TEMPLATE = "/repos/%s/%s/statuses/%s";
   private static final String COMMITS_URI_TEMPLATE = "/repos/%s/%s/commits";
+  private static final String COMMITS_SEARCH_URI_TEMPLATE = "/repos/%s/%s/commits?author=%s&since=%s&until=%s&per_page=%s";
   private static final String COMMIT_SHA_URI_TEMPLATE = "/repos/%s/%s/commits/%s";
   private static final String COMMIT_PULL_REQUESTS_SHA_URI_TEMPLATE =
       "/repos/%s/%s/commits/%s/pulls";
@@ -412,6 +415,12 @@ public class RepositoryClient {
   public CompletableFuture<List<CommitItem>> listCommits() {
     final String path = String.format(COMMITS_URI_TEMPLATE, owner, repo);
     return github.request(path, LIST_COMMIT_TYPE_REFERENCE);
+  }
+
+  public Iterator<AsyncPage<CommitItem>> listCommits(final String author, final int pageSize, final ZonedDateTime start, final ZonedDateTime end) {
+    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    final String path = String.format(COMMITS_SEARCH_URI_TEMPLATE, owner, repo, author, formatter.format(start), formatter.format(end), pageSize);
+    return new GithubPageIterator<>(new GithubPage<>(github, path, LIST_COMMIT_TYPE_REFERENCE));
   }
 
   /**
